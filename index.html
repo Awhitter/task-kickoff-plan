@@ -879,8 +879,126 @@
   </div>
 </div>
 
+<!-- ═══════ STRESS TEST FINDINGS ═══════ -->
+<div class="section">
+  <div class="section-label">Stress Testing</div>
+  <h2>What I Found Poking Holes in the Plan</h2>
+
+  <div class="compare">
+    <div class="compare-panel good">
+      <h4>Graph Coverage (Solid)</h4>
+      <ul>
+        <li><strong>113/113</strong> content types have prompt links</li>
+        <li><strong>113/113</strong> have recipe links</li>
+        <li><strong>113/113</strong> have rubric links</li>
+        <li>Minimum link count: <strong>7</strong> (no orphan content types)</li>
+        <li>Maximum: <strong>10</strong> (article-standard, email-newsletter, web-upgrade-screen)</li>
+        <li>All 118 recipes have schema+style+channel refs</li>
+        <li>All 31 prompts have real content with [[VARIABLES]]</li>
+        <li>17 distinct prompts mapped across 11 families (no collisions)</li>
+      </ul>
+    </div>
+    <div class="compare-panel bad">
+      <h4>FTS Gaps (Needs Workaround)</h4>
+      <ul>
+        <li>"marketing" → <strong>0 hits</strong> on content type FTS</li>
+        <li>"nurse" → <strong>0 hits</strong></li>
+        <li>"dental" → <strong>0 hits</strong></li>
+        <li>"investor" → <strong>0 hits</strong></li>
+        <li>"recruiting" → <strong>0 hits</strong></li>
+        <li>"quiz" → <strong>0 hits</strong></li>
+        <li><strong>Solution:</strong> Family word-bag is primary classifier, FTS is secondary refinement only</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ EDGE CASES ═══════ -->
+<div class="section">
+  <div class="section-label">Edge Cases</div>
+  <h2>8 Failure Modes and Their Handlers</h2>
+
+  <div class="cards-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">1. No Family Match</h4>
+      <p>"Help me with something." No creation intent detected. → Ask: "What format? Article, social post, landing page, or something else?"</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">2. Family but No Sub-Type</h4>
+      <p>"Write something for LinkedIn." Social family matched but which type? → Present all social content types as menu.</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">3. No Persona Match</h4>
+      <p>"Write for investors." No investor persona in KB (22 personas, all test-prep focused). → Skip persona, use brand-voice-master. Flag gap in run record.</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">4. Ambiguous Family</h4>
+      <p>"Make flashcards about pharmacology." study_guide AND qbank both match. → Present both options: "Flashcard set (study guide) or question bank?"</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">5. User Overrides Kit</h4>
+      <p>"I don't want that rubric." → Respect it. The kit is suggestions, not mandates. Replace component and proceed.</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">6. Non-Content Task</h4>
+      <p>"Research competitor pricing." No content type match. → Skill-first path: discover skills + tools + KB by FTS. Lighter kit without recipe/schema.</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">7. Batch Operations</h4>
+      <p>"Create 20 pharmacology questions." → Same kickoff, but execution uses orchestrator-workers pattern. Sub-agents each get hydrated prompt + persona.</p>
+    </div>
+    <div class="decision-card">
+      <h4 style="color:var(--orange)">8. Multi-Format Request</h4>
+      <p>"Blog post AND social post promoting it." → Run kickoff twice, present both kits. Execute article first since social can reference it.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TOKEN BUDGET ═══════ -->
+<div class="section">
+  <div class="section-label">Context Management</div>
+  <h2>KB Token Budget</h2>
+  <p style="color:var(--text-dim); margin-bottom:1rem;">Total KB injection stays under 5K tokens — fits comfortably in any context window.</p>
+
+  <div class="kit" style="gap: 0.75rem 1.5rem;">
+    <div class="kit-label">Tier A (always)</div>
+    <div class="kit-value">~1,650 tokens — brand-voice-master + writing-guidelines-core + compliance-and-claims (snippet variants)</div>
+    <div class="kit-label">Tier B (persona)</div>
+    <div class="kit-value">~1,500 tokens — matched persona profile (distilled variant). Skip if no match.</div>
+    <div class="kit-label">Tier C (domain)</div>
+    <div class="kit-value">~1,500 tokens — exam blueprint + topic taxonomy (distilled). Only if user mentions specific exam/domain.</div>
+    <div class="kit-label">Max total</div>
+    <div class="kit-value"><strong>~4,650 tokens</strong> — well within budget even for Sonnet sub-agents (16K max output)</div>
+  </div>
+</div>
+
+<!-- ═══════ NOT COVERED ═══════ -->
+<div class="section">
+  <div class="section-label">Scope Boundaries</div>
+  <h2>What This Intentionally Does NOT Do</h2>
+
+  <div class="decision-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+    <div class="decision-card">
+      <h4>Auto-Execute Tools</h4>
+      <p>Kit tells Victoria WHICH tools to use. Tool execution stays in Victoria's existing loop. No auto-calling external APIs.</p>
+    </div>
+    <div class="decision-card">
+      <h4>Schema Validation</h4>
+      <p>Schemas define output contracts. Enforcement happens at eval time via rubric, not at generation time. Soft, not hard.</p>
+    </div>
+    <div class="decision-card">
+      <h4>Auto-Publish</h4>
+      <p>Kit discovers the channel but doesn't auto-publish. Alec decides when and where content goes live.</p>
+    </div>
+    <div class="decision-card">
+      <h4>A/B Testing</h4>
+      <p>Infrastructure exists (ab_tests table) but kickoff doesn't create experiments. Separate workflow for that.</p>
+    </div>
+  </div>
+</div>
+
 <div class="footnote">
-  <p>Plan by Victoria — Feb 20, 2026. Architecture grounded in: Anthropic "Building Effective Agents" (prompt chaining, routing, orchestrator-workers, evaluator-optimizer patterns), Catalyst VISION.md, RULES.md, SHARED_CONTRACT.md, and the existing entity_links graph structure.</p>
+  <p>Plan v2 by Victoria — Feb 20, 2026. Stress-tested against all 113 content types, 31 prompts, 22 persona profiles. Architecture grounded in: Anthropic "Building Effective Agents" (prompt chaining, routing, orchestrator-workers, evaluator-optimizer patterns), Catalyst VISION.md, RULES.md, SHARED_CONTRACT.md, and the existing entity_links graph (2,521 links, 100% content type coverage for prompts, recipes, and rubrics).</p>
 </div>
 
 </div>
