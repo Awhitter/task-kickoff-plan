@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Kickoff Protocol — Architecture Plan</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface2: #1C2333;
+    --border: #30363D;
+    --text: #E6EDF3;
+    --text-dim: #8B949E;
+    --accent: #58A6FF;
+    --green: #3FB950;
+    --orange: #D29922;
+    --red: #F85149;
+    --purple: #BC8CFF;
+    --pink: #F778BA;
+    --cyan: #39D2C0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle { color: var(--text-dim); font-size: 1.1rem; margin-bottom: 3rem; }
+
+  /* Section */
+  .section { margin-bottom: 4rem; }
+  .section-label {
+    font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 0.75rem;
+  }
+  .section h2 {
+    font-size: 1.5rem; font-weight: 600; margin-bottom: 1.5rem;
+  }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .flow-step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1.5rem;
+    position: relative;
+  }
+
+  .flow-step + .flow-step { margin-top: 0; }
+
+  .flow-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .flow-dot {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem; color: #fff;
+    flex-shrink: 0; position: relative; z-index: 1;
+  }
+
+  .flow-line {
+    width: 2px; flex: 1; min-height: 20px;
+    background: linear-gradient(180deg, var(--border) 0%, var(--border) 100%);
+  }
+
+  .flow-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .flow-content h3 {
+    font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+
+  .flow-content p { color: var(--text-dim); font-size: 0.9rem; }
+
+  .tag {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 500; letter-spacing: 0.05em;
+  }
+
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag-orange { background: rgba(210,153,34,0.15); color: var(--orange); }
+  .tag-purple { background: rgba(188,140,255,0.15); color: var(--purple); }
+  .tag-pink { background: rgba(247,120,186,0.15); color: var(--pink); }
+  .tag-cyan { background: rgba(57,210,192,0.15); color: var(--cyan); }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    overflow-x: auto;
+    margin-top: 0.75rem;
+  }
+
+  .code-block .k { color: var(--purple); }
+  .code-block .s { color: var(--green); }
+  .code-block .c { color: #6A737D; }
+  .code-block .n { color: var(--accent); }
+  .code-block .v { color: var(--orange); }
+
+  /* Decision tree */
+  .decision-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .decision-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .decision-card:hover { border-color: var(--accent); }
+
+  .decision-card h4 {
+    font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;
+  }
+
+  .decision-card p {
+    font-size: 0.75rem; color: var(--text-dim); line-height: 1.5;
+  }
+
+  /* Composition kit */
+  .kit {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0.5rem 1rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .kit-label { color: var(--text-dim); font-weight: 500; text-align: right; }
+  .kit-value { color: var(--text); }
+  .kit-value code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    background: var(--surface2);
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+  }
+
+  /* Agent cards */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .agent-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .agent-card .agent-name { font-weight: 600; font-size: 0.9rem; }
+  .agent-card .agent-role { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem; }
+  .agent-card .agent-default { font-size: 0.7rem; color: var(--cyan); margin-top: 0.5rem; }
+
+  /* Principles */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .principle {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+  }
+
+  .principle h4 { font-size: 0.9rem; margin-bottom: 0.25rem; }
+  .principle p { font-size: 0.8rem; color: var(--text-dim); }
+  .principle .source { font-size: 0.7rem; color: var(--purple); margin-top: 0.5rem; }
+
+  /* Test matrix */
+  table {
+    width: 100%; border-collapse: collapse; margin-top: 1rem;
+    font-size: 0.8rem;
+  }
+
+  th {
+    text-align: left; padding: 0.75rem; border-bottom: 2px solid var(--border);
+    color: var(--text-dim); font-weight: 600; font-size: 0.7rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  td {
+    padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  td code {
+    font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+    background: var(--surface2); padding: 0.1rem 0.3rem; border-radius: 3px;
+  }
+
+  /* Comparison */
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 768px) { .compare { grid-template-columns: 1fr; } }
+
+  .compare-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .compare-panel h4 { font-size: 0.9rem; margin-bottom: 1rem; }
+  .compare-panel.bad { border-color: var(--red); }
+  .compare-panel.bad h4 { color: var(--red); }
+  .compare-panel.good { border-color: var(--green); }
+  .compare-panel.good h4 { color: var(--green); }
+  .compare-panel ol, .compare-panel ul { padding-left: 1.25rem; }
+  .compare-panel li { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.35rem; }
+
+  .footnote {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Task Kickoff Protocol</h1>
+<p class="subtitle">How Victoria discovers, composes, and executes Catalyst blocks for every significant task. An architecture plan grounded in Anthropic's agent patterns, Catalyst's own VISION.md, and the existing graph structure.</p>
+
+<!-- ═══════ DESIGN PRINCIPLES ═══════ -->
+<div class="section">
+  <div class="section-label">Foundation</div>
+  <h2>Design Principles (Why This Architecture)</h2>
+
+  <div class="principles">
+    <div class="principle">
+      <h4>Graph-Walk, Not Search</h4>
+      <p>Content types already link to their prompts, recipes, tools, rubrics via entity_links. The graph IS the discovery system. We walk it, not reinvent it.</p>
+      <div class="source">Source: 2,521 entity_links already wired</div>
+    </div>
+    <div class="principle">
+      <h4>Menus, Not Routes</h4>
+      <p>When multiple content types match, present them ranked. Don't auto-pick. Preserve agent autonomy and human choice.</p>
+      <div class="source">Source: VISION.md — "Discovery by hints, not hard routing"</div>
+    </div>
+    <div class="principle">
+      <h4>Simplest Solution First</h4>
+      <p>Don't kickoff for simple questions. Only invoke the protocol for creation tasks where composing blocks adds measurable value.</p>
+      <div class="source">Source: Anthropic — "finding the simplest solution possible"</div>
+    </div>
+    <div class="principle">
+      <h4>Prompt Chaining with Gates</h4>
+      <p>Decompose into sequential steps (classify → discover → hydrate → execute → score) with programmatic checkpoints between each.</p>
+      <div class="source">Source: Anthropic — Prompt Chaining workflow pattern</div>
+    </div>
+    <div class="principle">
+      <h4>Evaluator-Optimizer Loop</h4>
+      <p>After generating, score against the discovered rubric. If below threshold, iterate with feedback. Catalyst already has rubric-judge prompt + 25 rubrics.</p>
+      <div class="source">Source: Anthropic — Evaluator-Optimizer pattern + Catalyst rubrics</div>
+    </div>
+    <div class="principle">
+      <h4>Domain-Portable</h4>
+      <p>Nothing hardcoded to nursing/NCLEX/exams. The prompts already use [[TARGET_AUDIENCE]] and say "do not assume a fixed domain." Follow that principle everywhere.</p>
+      <div class="source">Source: USER.md — "be careful to not over-optimize for test prep"</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BEFORE/AFTER ═══════ -->
+<div class="section">
+  <div class="section-label">The Problem</div>
+  <h2>What Changes</h2>
+
+  <div class="compare">
+    <div class="compare-panel bad">
+      <h4>Today (Improvised)</h4>
+      <ol>
+        <li>Alec says "write a social post about study tips"</li>
+        <li>Victoria writes it from scratch</li>
+        <li>No persona context injected</li>
+        <li>No schema contract followed</li>
+        <li>No style overlay applied</li>
+        <li>No rubric evaluation</li>
+        <li>No run recorded</li>
+        <li>No learning for next time</li>
+      </ol>
+    </div>
+    <div class="compare-panel good">
+      <h4>With Kickoff Protocol</h4>
+      <ol>
+        <li>Alec says "write a social post about study tips"</li>
+        <li>Classify → family:social → discover content types</li>
+        <li>Walk graph → get recipe, prompt, style, rubric, tools</li>
+        <li>Match persona from 20 KB profiles</li>
+        <li>Hydrate prompt:social-post-v1 with [[VARIABLES]]</li>
+        <li>Present composition kit → Alec confirms/adjusts</li>
+        <li>Execute with hydrated prompt + persona context</li>
+        <li>Score against rubric → iterate if needed</li>
+        <li>Record run for learning</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ THE 8-PHASE FLOW ═══════ -->
+<div class="section">
+  <div class="section-label">Architecture</div>
+  <h2>The 8-Phase Flow</h2>
+
+  <div class="flow">
+
+    <!-- Phase 1 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--accent)">1</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Classify Intent <span class="tag tag-blue">ROUTING</span></h3>
+        <p>Determine if this is a creation task (needs kickoff) or a simple task (skip). If creation, map to content type family.</p>
+
+        <p style="margin-top:0.75rem; color:var(--text); font-weight:500;">Decision tree:</p>
+        <div class="decision-grid">
+          <div class="decision-card">
+            <h4 style="color:var(--red)">Skip Kickoff</h4>
+            <p>Quick questions, system commands, data queries, config changes, casual chat. Just answer directly.</p>
+          </div>
+          <div class="decision-card">
+            <h4 style="color:var(--green)">Run Kickoff</h4>
+            <p>Content creation, article writing, social posts, QBank items, landing pages, presentations, study guides, reports, scripts.</p>
+          </div>
+          <div class="decision-card">
+            <h4 style="color:var(--orange)">Skill-First</h4>
+            <p>Research tasks, competitive analysis, audits, technical work. No content type match → search skills directly.</p>
+          </div>
+        </div>
+
+        <p style="margin-top:1rem; color:var(--text); font-weight:500;">Family mapping (from user keywords):</p>
+        <div class="decision-grid">
+          <div class="decision-card"><h4 style="color:var(--accent)">social</h4><p>post, instagram, linkedin, tweet, tiktok, reel, story, thread</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">qbank</h4><p>question, MCQ, SATA, practice, item, quiz, assessment</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">article</h4><p>article, blog, write about, how-to, listicle, deep dive, guide</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">web</h4><p>landing page, website, homepage, funnel, page, screen</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">study_guide</h4><p>study guide, review, cheat sheet, flashcard, study material</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">visual</h4><p>image, infographic, diagram, chart, visual, illustration</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">message</h4><p>email, notification, SMS, drip, welcome, onboarding</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">report</h4><p>report, analysis, audit, research pack, competitive</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">audio</h4><p>podcast, audio, script, voice, narration</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">presentation</h4><p>slides, deck, presentation, pitch, keynote</p></div>
+          <div class="decision-card"><h4 style="color:var(--accent)">interactive</h4><p>interactive, module, simulation, quiz builder</p></div>
+        </div>
+
+        <div class="code-block">
+<span class="c">// Phase 1: Classify</span>
+<span class="k">Input</span>: <span class="s">"write a social media post about study tips for nursing students"</span>
+<span class="k">Extract</span>: keywords=[social, media, post, study, tips, nursing, students]
+<span class="k">Family</span>: <span class="v">social</span> (matched: "social", "post")
+<span class="k">Audience hints</span>: <span class="v">"nursing students"</span>
+<span class="k">Topic</span>: <span class="v">"study tips"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--green)">2</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Discover Content Types <span class="tag tag-green">GRAPH QUERY</span></h3>
+        <p>Query content_types by family tag. Also run FTS on name+summary for sub-type matching. Present top 3-5 as a menu.</p>
+
+        <div class="code-block">
+<span class="c">-- Phase 2: Find matching content types</span>
+<span class="k">SELECT</span> re.code, re.name, re.summary
+<span class="k">FROM</span> registry_entities re
+<span class="k">JOIN</span> content_types ct <span class="k">ON</span> ct.entity_id = re.id
+<span class="k">JOIN</span> entity_tags et <span class="k">ON</span> et.entity_id = re.id
+<span class="k">JOIN</span> tags t <span class="k">ON</span> t.id = et.tag_id
+<span class="k">JOIN</span> tag_namespaces ns <span class="k">ON</span> ns.id = t.namespace_id
+<span class="k">WHERE</span> ns.code = <span class="s">'family'</span> <span class="k">AND</span> t.code = <span class="s">'social'</span>
+<span class="k">ORDER BY</span> re.tier <span class="k">DESC</span>, re.name;
+
+<span class="c">-- Returns: 20 social content types</span>
+<span class="c">-- social-instagram-carousel, social-linkedin-post, social-thread-x,</span>
+<span class="c">-- social-tiktok-script, social-facebook-post, etc.</span>
+
+<span class="c">-- Then FTS to narrow: which ones mention "study" or "tips"?</span>
+<span class="k">... AND</span> to_tsvector(re.name || <span class="s">' '</span> || re.summary)
+       <span class="k">@@</span> websearch_to_tsquery(<span class="s">'study tips'</span>)
+        </div>
+
+        <p style="margin-top:0.75rem;"><strong>Key principle:</strong> If multiple match, present all of them ranked. Don't auto-select. Example output:</p>
+        <div class="code-block">
+<span class="c">Matching content types for "social post about study tips":</span>
+  <span class="n">1.</span> social-standard          <span class="c">— General social post (any platform)</span>
+  <span class="n">2.</span> social-instagram-carousel <span class="c">— Multi-slide visual carousel</span>
+  <span class="n">3.</span> social-thread-x           <span class="c">— Twitter/X thread format</span>
+  <span class="n">4.</span> social-linkedin-post       <span class="c">— Professional network format</span>
+  <span class="n">5.</span> social-tiktok-script       <span class="c">— Short video script</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--orange)">3</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Walk the Graph <span class="tag tag-orange">TRAVERSAL</span></h3>
+        <p>From the selected content type, follow entity_links to assemble the full composition kit. One hop gives recipe, prompt, style, rubric, tools, metrics.</p>
+
+        <div class="code-block">
+<span class="c">-- Phase 3: Walk links from content_type:social-standard</span>
+<span class="k">SELECT</span> el.link_type,
+       re2.entity_type || <span class="s">':'</span> || re2.code <span class="k">AS</span> target,
+       re2.name
+<span class="k">FROM</span> entity_links el
+<span class="k">JOIN</span> registry_entities re2 <span class="k">ON</span> re2.id = el.to_entity_id
+<span class="k">WHERE</span> el.from_entity_id = <span class="v">[content_type_id]</span>
+<span class="k">ORDER BY</span> el.link_type;
+
+<span class="c">-- Typical result:</span>
+  requires   → recipe:social-standard
+  requires   → style:social_casual
+  requires   → channel:instagram (or whichever)
+  uses_prompt → prompt:social-post-v1
+  uses_tool   → tool:cloudinary.upload
+  recommends  → rubric:engagement-v1
+  recommends  → metric:impressions
+        </div>
+
+        <p style="margin-top:0.75rem;"><strong>Then follow the recipe</strong> to get the schema + style + channel:</p>
+        <div class="code-block">
+<span class="c">-- From recipe:social-standard</span>
+  base_schema_ref → schema:social_post_v1
+  style_ref       → style:social_casual
+  channel_ref     → channel:instagram
+  constraints_json → { max_chars: 2200, hashtags: 5-10 }
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 4 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--purple)">4</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Enrich Context from KB <span class="tag tag-purple">RETRIEVAL</span></h3>
+        <p>Match persona profiles and reference material from the 67 KB items. Inject distilled variants (best token-to-value ratio).</p>
+
+        <p style="margin-top:0.75rem;"><strong>Persona matching</strong> (from audience hints "nursing students"):</p>
+        <div class="code-block">
+<span class="c">-- Find matching personas from KB</span>
+<span class="k">SELECT</span> re.code, re.name, kv.content
+<span class="k">FROM</span> kb_variants kv
+<span class="k">JOIN</span> kb_items ki <span class="k">ON</span> ki.id = kv.kb_item_id
+<span class="k">JOIN</span> registry_entities re <span class="k">ON</span> re.id = ki.entity_id
+<span class="k">WHERE</span> ki.item_type = <span class="s">'persona_profile'</span>
+  <span class="k">AND</span> kv.variant_type = <span class="s">'distilled'</span>
+  <span class="k">AND</span> (re.name <span class="k">ILIKE</span> <span class="s">'%nursing%'</span>
+    <span class="k">OR</span> re.name <span class="k">ILIKE</span> <span class="s">'%student%'</span>
+    <span class="k">OR</span> re.summary <span class="k">ILIKE</span> <span class="s">'%nursing%'</span>);
+
+<span class="c">-- Potential matches:</span>
+<span class="c">-- persona-maria-international-nurse</span>
+<span class="c">-- persona-emily-overwhelmed-grad-to-be</span>
+<span class="c">-- persona-erin-icu-prep</span>
+<span class="c">-- persona-stephanie-anxious-procrastinator</span>
+        </div>
+
+        <p style="margin-top:0.75rem;"><strong>Also load</strong> (always, for any content task):</p>
+        <ul style="margin-top:0.5rem; padding-left:1.25rem;">
+          <li style="font-size:0.85rem; color:var(--text-dim)">brand-voice-master (guideline) — brand tone + do/don't</li>
+          <li style="font-size:0.85rem; color:var(--text-dim)">writing-guidelines-core (guideline) — writing standards</li>
+          <li style="font-size:0.85rem; color:var(--text-dim)">compliance-and-claims (policy) — what we can/can't claim</li>
+        </ul>
+
+        <p style="margin-top:0.75rem;"><strong>Load conditionally</strong> (if domain-specific):</p>
+        <ul style="margin-top:0.5rem; padding-left:1.25rem;">
+          <li style="font-size:0.85rem; color:var(--text-dim)">exam-blueprint-nclex-rn (if nursing context)</li>
+          <li style="font-size:0.85rem; color:var(--text-dim)">audience-nursing-students (if nursing audience)</li>
+          <li style="font-size:0.85rem; color:var(--text-dim)">headline-frameworks (for social/article)</li>
+          <li style="font-size:0.85rem; color:var(--text-dim)">seo-topic-signals (for web/article)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Phase 5 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--pink)">5</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Hydrate Prompt <span class="tag tag-pink">ASSEMBLY</span></h3>
+        <p>Load the discovered prompt contract. Fill [[VARIABLES]] from classified intent + enriched context. This is the actual instruction set for generation.</p>
+
+        <div class="code-block">
+<span class="c">// prompt:social-post-v1 template:</span>
+<span class="k">[[PRIMARY_GOAL]]</span>    = <span class="s">"Write a social media post about study tips"</span>
+<span class="k">[[TARGET_AUDIENCE]]</span> = <span class="s">"Nursing students preparing for NCLEX — see persona below"</span>
+<span class="k">[[TOPIC]]</span>           = <span class="s">"Study tips and exam preparation strategies"</span>
+<span class="k">[[PLATFORM]]</span>        = <span class="s">"Instagram"</span> <span class="c">(from channel_ref)</span>
+<span class="k">[[MAX_CHARACTERS]]</span>  = <span class="v">2200</span> <span class="c">(from recipe constraints)</span>
+<span class="k">[[CONSTRAINTS]]</span>     = <span class="s">"{hashtags: 5-10, tone: social_casual}"</span> <span class="c">(from recipe + style)</span>
+<span class="k">[[CONTEXT_NOTES]]</span>   = <span class="s">"[Persona: Maria, international nurse...]</span>
+                       <span class="s"> [Brand voice: direct, supportive...]</span>
+                       <span class="s"> [Compliance: no guarantees of pass rates...]"</span>
+
+<span class="c">// The prompt itself handles everything else:</span>
+<span class="c">// - "Restate the objective using provided inputs"</span>
+<span class="c">// - "Keep guidance portable: avoid locking to one vertical"</span>
+<span class="c">// - "Optimize for readability in-feed"</span>
+<span class="c">// - "Keep claims source-safe"</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 6 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--cyan)">6</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Present Composition Kit <span class="tag tag-cyan">CHECKPOINT</span></h3>
+        <p>Show the assembled kit to the user. This is the human-in-the-loop checkpoint from Anthropic's agent patterns. User can confirm, adjust, or override.</p>
+
+        <div class="code-block" style="background: #0d2137; border-color: var(--accent);">
+<span class="c">## Composition Kit</span>
+
+<span class="n">Content Type</span>: social-standard (General Social Post)
+<span class="n">Recipe</span>:       social-standard → schema:social_post_v1 + style:social_casual + channel:instagram
+<span class="n">Prompt</span>:       social-post-v1 (6 variables filled)
+<span class="n">Persona</span>:      Maria (International Nurse) — distilled variant loaded
+<span class="n">Style</span>:        Social Casual
+<span class="n">Rubric</span>:       engagement-v1
+<span class="n">Tools</span>:        cloudinary.upload (for image)
+<span class="n">Playbook</span>:     none (single-step task)
+
+<span class="s">Ready to generate? Or adjust:</span>
+<span class="s">  → Different platform? (linkedin, x, tiktok)</span>
+<span class="s">  → Different persona? (Emily, Erin, Stephanie)</span>
+<span class="s">  → Different style? (conversion, bestseller, clinical)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 7 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--green)">7</div>
+        <div class="flow-line"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Execute + Evaluate <span class="tag tag-green">GENERATION</span> <span class="tag tag-orange">EVAL</span></h3>
+        <p>Generate using the hydrated prompt. Then score against the discovered rubric using rubric-judge prompt. If below threshold, iterate.</p>
+
+        <p style="margin-top:0.75rem;"><strong>Execution pattern</strong> depends on complexity:</p>
+        <div class="decision-grid">
+          <div class="decision-card">
+            <h4 style="color:var(--green)">Single-Step</h4>
+            <p>Social post, email, short message. Generate → score → done.</p>
+          </div>
+          <div class="decision-card">
+            <h4 style="color:var(--orange)">Prompt Chain</h4>
+            <p>Article, report. Research → outline → draft → score. Each step has a gate.</p>
+          </div>
+          <div class="decision-card">
+            <h4 style="color:var(--purple)">Orchestrator-Workers</h4>
+            <p>QBank batch, study guide. Spawn sub-agents for parallel sections.</p>
+          </div>
+          <div class="decision-card">
+            <h4 style="color:var(--pink)">Evaluator-Optimizer</h4>
+            <p>High-stakes content. Generate → rubric score → feedback loop → re-generate.</p>
+          </div>
+        </div>
+
+        <p style="margin-top:0.75rem;"><strong>If a playbook exists</strong>, follow its steps:</p>
+        <div class="code-block">
+<span class="c">// playbook:blog-production has 3 steps:</span>
+<span class="n">Step 1</span> [discover]: Use skill:research-trends + tool:tavily.search
+<span class="n">Step 2</span> [execute]:  Use prompt:blog-post-system + agent:ivy-diff-first-editor
+<span class="n">Step 3</span> [evaluate]: Score against rubric:content-quality
+
+<span class="c">// playbook:study-guide-production has 5 steps:</span>
+<span class="n">Step 1</span> [discover]: skill:craft-multimedia-study-guide + tavily + firecrawl
+<span class="n">Step 2</span> [execute]:  prompt:study-guide-v1 + prompt:learning-objectives-v1 + agent:lucy
+<span class="n">Step 3</span> [execute]:  tool:fal.image_generate (visuals)
+<span class="n">Step 4</span> [execute]:  tool:codesandbox.create-sandbox (interactive, optional)
+<span class="n">Step 5</span> [evaluate]: rubric:content-quality
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 8 -->
+    <div class="flow-step">
+      <div class="flow-marker">
+        <div class="flow-dot" style="background:var(--accent)">8</div>
+        <div class="flow-line" style="background:transparent"></div>
+      </div>
+      <div class="flow-content">
+        <h3>Record Run <span class="tag tag-blue">LEARNING</span></h3>
+        <p>Store everything in the runs table. This closes the feedback loop — future discovery weights improve from actual execution data.</p>
+
+        <div class="code-block">
+<span class="c">// DB tables used:</span>
+<span class="n">runs</span>           → run_id, intent, content_type_ref, started_at, status
+<span class="n">run_steps</span>      → step_number, step_type, skill/tool/prompt refs used
+<span class="n">run_tool_calls</span> → tool_ref, input, output, latency_ms
+<span class="n">run_outputs</span>    → output_json (the generated content)
+<span class="n">run_costs</span>      → model, input_tokens, output_tokens, cost_usd
+<span class="n">evaluations</span>    → rubric_ref, score, per_criterion, improvement_actions
+
+<span class="c">// Over time, this data feeds into:</span>
+<span class="n">discovery_weights</span> → Which content types/recipes produce best results
+<span class="n">entity_eval_signals</span> → Quality signals per entity
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ AGENT ROUTING ═══════ -->
+<div class="section">
+  <div class="section-label">Agent Architecture</div>
+  <h2>Who Does What (Orchestrator-Workers Pattern)</h2>
+
+  <p style="color:var(--text-dim); margin-bottom:1rem;">Victoria is the orchestrator. The 6 Catalyst agents are specialized workers routed by task type. Each has proclivities (prefer/default_to) that shape their tool selection.</p>
+
+  <div class="agent-grid">
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--accent)">Victoria</div>
+      <div class="agent-role">Orchestrator</div>
+      <div class="agent-default">Runs kickoff, routes to workers, reviews output</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--green)">Ivy</div>
+      <div class="agent-role">Diff-First Editor</div>
+      <div class="agent-default">default: copy-editing, prefer: diff-first prompt</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--purple)">Nova</div>
+      <div class="agent-role">Research Librarian</div>
+      <div class="agent-default">default: tavily.search, prefer: firecrawl, cohere.rerank</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--orange)">Quinn</div>
+      <div class="agent-role">Quality Reviewer</div>
+      <div class="agent-default">default: rubric:content-quality, prefer: golden tests</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--pink)">Lucy</div>
+      <div class="agent-role">Lesson Planner</div>
+      <div class="agent-default">default: study-guide-production, prefer: fal images</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--cyan)">Atlas</div>
+      <div class="agent-role">Orchestrator</div>
+      <div class="agent-default">default: registry-health-scan, prefer: db.query, suggest-links</div>
+    </div>
+    <div class="agent-card">
+      <div class="agent-name" style="color:var(--red)">Rex</div>
+      <div class="agent-role">Repo Explorer</div>
+      <div class="agent-default">default: bash.run, prefer: db.query, agent-development</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ IMPLEMENTATION ═══════ -->
+<div class="section">
+  <div class="section-label">Implementation</div>
+  <h2>What Gets Built (4 Scripts + 1 Skill)</h2>
+
+  <div class="decision-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+    <div class="decision-card" style="border-color:var(--accent)">
+      <h4 style="color:var(--accent)">kickoff.js</h4>
+      <p>The graph walker. Takes user intent → classifies family → queries content types → traverses links → matches persona → returns composition kit JSON.</p>
+      <p style="margin-top:0.5rem; font-size:0.7rem; color:var(--green)">~200 lines. Uses pg client. 3-5 queries.</p>
+    </div>
+    <div class="decision-card" style="border-color:var(--purple)">
+      <h4 style="color:var(--purple)">hydrate.js</h4>
+      <p>Loads prompt from DB, replaces [[VARIABLES]], injects KB context into [[CONTEXT_NOTES]]. Returns ready-to-use prompt string.</p>
+      <p style="margin-top:0.5rem; font-size:0.7rem; color:var(--green)">~80 lines. Simple template engine.</p>
+    </div>
+    <div class="decision-card" style="border-color:var(--orange)">
+      <h4 style="color:var(--orange)">score.js</h4>
+      <p>Loads rubric criteria + rubric-judge prompt. Fills [[RUBRIC_JSON]] and [[CANDIDATE_OUTPUT]]. Returns hydrated eval prompt.</p>
+      <p style="margin-top:0.5rem; font-size:0.7rem; color:var(--green)">~60 lines. Reuses hydrate.js.</p>
+    </div>
+    <div class="decision-card" style="border-color:var(--green)">
+      <h4 style="color:var(--green)">record.js</h4>
+      <p>INSERTs into runs, run_steps, run_tool_calls, run_outputs, run_costs, evaluations. Closes the feedback loop.</p>
+      <p style="margin-top:0.5rem; font-size:0.7rem; color:var(--green)">~100 lines. Transactional writes.</p>
+    </div>
+    <div class="decision-card" style="border-color:var(--pink)">
+      <h4 style="color:var(--pink)">SKILL.md</h4>
+      <p>Registered in Catalyst as skill:task-kickoff. Documents when to use, when NOT to use, the 8-phase protocol, and example composition kits.</p>
+      <p style="margin-top:0.5rem; font-size:0.7rem; color:var(--green)">Follows SHARED_CONTRACT.md envelope.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TEST MATRIX ═══════ -->
+<div class="section">
+  <div class="section-label">Validation</div>
+  <h2>Test Matrix (10 Diverse Intents)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Intent</th>
+        <th>Expected Family</th>
+        <th>Expected Content Type(s)</th>
+        <th>Expected Prompt</th>
+        <th>Persona Match?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>"Write a social post about study tips"</td>
+        <td><span class="tag tag-blue">social</span></td>
+        <td><code>social-standard</code></td>
+        <td><code>social-post-v1</code></td>
+        <td>Yes (nursing if specified)</td>
+      </tr>
+      <tr>
+        <td>"Create 5 pharmacology NCLEX questions"</td>
+        <td><span class="tag tag-green">qbank</span></td>
+        <td><code>qbank-standard-mcq</code></td>
+        <td><code>qbank-format-v1</code></td>
+        <td>Yes (exam-blueprint-nclex-rn)</td>
+      </tr>
+      <tr>
+        <td>"Build a landing page for FNP app"</td>
+        <td><span class="tag tag-purple">web</span></td>
+        <td><code>web-landing-page</code></td>
+        <td><code>web-page-structure-v1</code></td>
+        <td>Maybe (melissa-advanced-practice)</td>
+      </tr>
+      <tr>
+        <td>"Write a deep dive on AI in healthcare"</td>
+        <td><span class="tag tag-orange">article</span></td>
+        <td><code>article-deep-dive</code></td>
+        <td><code>article-structure-v1</code></td>
+        <td>No (general audience)</td>
+      </tr>
+      <tr>
+        <td>"Make a cardiac nursing study guide"</td>
+        <td><span class="tag tag-pink">study_guide</span></td>
+        <td><code>study-guide-topic-review</code></td>
+        <td><code>study-guide-v1</code></td>
+        <td>Yes + exam blueprint</td>
+      </tr>
+      <tr>
+        <td>"Design an email drip for new users"</td>
+        <td><span class="tag tag-cyan">message</span></td>
+        <td><code>message-drip-*</code></td>
+        <td><code>message-structure-v1</code></td>
+        <td>No (product context)</td>
+      </tr>
+      <tr>
+        <td>"Create an investor slide deck"</td>
+        <td><span class="tag tag-blue">presentation</span></td>
+        <td><code>presentation-pitch-deck</code></td>
+        <td><code>slide-deck-v1</code></td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>"Research competitor pricing"</td>
+        <td><span class="tag tag-orange">general</span></td>
+        <td>None (skill-first)</td>
+        <td>N/A</td>
+        <td>No</td>
+      </tr>
+      <tr>
+        <td>"Make an infographic about pass rates"</td>
+        <td><span class="tag tag-purple">visual</span></td>
+        <td><code>visual-infographic</code></td>
+        <td><code>visual-brief-v1</code></td>
+        <td>Optional</td>
+      </tr>
+      <tr>
+        <td>"Write a podcast script about test anxiety"</td>
+        <td><span class="tag tag-pink">audio</span></td>
+        <td><code>audio-podcast-episode</code></td>
+        <td><code>audio-script-v1</code></td>
+        <td>Yes (anxious personas)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ═══════ WHAT ALREADY EXISTS ═══════ -->
+<div class="section">
+  <div class="section-label">Existing Assets</div>
+  <h2>What We're Building ON (Not Replacing)</h2>
+
+  <div class="kit" style="gap: 0.75rem 1.5rem;">
+    <div class="kit-label">Skill</div>
+    <div class="kit-value"><code>registry-discovery-primer</code> — already documents the discovery-first preflight protocol. Task-kickoff extends it with automation.</div>
+    <div class="kit-label">31 Prompts</div>
+    <div class="kit-value">All parameterized with [[VARIABLES]], domain-portable, with guardrails. Ready to hydrate.</div>
+    <div class="kit-label">21 Schemas</div>
+    <div class="kit-value">JSON output contracts for every content family. Wired into recipes.</div>
+    <div class="kit-label">118 Recipes</div>
+    <div class="kit-value">Every recipe pre-wires schema + style + channel. Ready to compose.</div>
+    <div class="kit-label">20 Personas</div>
+    <div class="kit-value">Detailed buyer personas in KB with goals, objections, messaging DOs/DON'Ts. In 3 variants.</div>
+    <div class="kit-label">25 Rubrics</div>
+    <div class="kit-value">Content Quality, Engagement, QBank Quality, Article Quality, etc. All linkable to rubric-judge prompt.</div>
+    <div class="kit-label">2,521 Links</div>
+    <div class="kit-value">The graph is already wired. Content types → recipes → prompts → tools → rubrics → metrics.</div>
+    <div class="kit-label">13 Playbooks</div>
+    <div class="kit-value">Blog production (3 steps), study guide (5 steps), registry health scan, etc. All with real step definitions.</div>
+    <div class="kit-label">756 Embeddings</div>
+    <div class="kit-value">Semantic search is now live (filled yesterday). Can fall back to this when FTS + graph-walk miss.</div>
+  </div>
+</div>
+
+<div class="footnote">
+  <p>Plan by Victoria — Feb 20, 2026. Architecture grounded in: Anthropic "Building Effective Agents" (prompt chaining, routing, orchestrator-workers, evaluator-optimizer patterns), Catalyst VISION.md, RULES.md, SHARED_CONTRACT.md, and the existing entity_links graph structure.</p>
+</div>
+
+</div>
+</body>
+</html>
