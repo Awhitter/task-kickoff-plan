@@ -280,7 +280,7 @@
 <div class="page">
 
 <h1>Task Kickoff Protocol</h1>
-<p class="subtitle">How Victoria discovers, composes, and executes Catalyst blocks for every significant task. An architecture plan grounded in Anthropic's agent patterns, Catalyst's own VISION.md, and the existing graph structure.</p>
+<p class="subtitle">How Victoria discovers, composes, and executes Catalyst blocks for every significant task. Shipped (v3). Graph-walk orchestration grounded in Anthropic's agent patterns, Catalyst's VISION.md, and the existing entity_links graph. 10/10 intent tests passing.</p>
 
 <!-- ═══════ DESIGN PRINCIPLES ═══════ -->
 <div class="section">
@@ -291,7 +291,7 @@
     <div class="principle">
       <h4>Graph-Walk, Not Search</h4>
       <p>Content types already link to their prompts, recipes, tools, rubrics via entity_links. The graph IS the discovery system. We walk it, not reinvent it.</p>
-      <div class="source">Source: 2,521 entity_links already wired</div>
+      <div class="source">Source: 2,736 entity_links already wired</div>
     </div>
     <div class="principle">
       <h4>Menus, Not Routes</h4>
@@ -507,7 +507,7 @@
       </div>
       <div class="flow-content">
         <h3>Enrich Context from KB <span class="tag tag-purple">RETRIEVAL</span></h3>
-        <p>Match persona profiles and reference material from the 67 KB items. Inject distilled variants (best token-to-value ratio).</p>
+        <p>Match persona profiles and reference material from the 70 KB items. Inject distilled variants (best token-to-value ratio).</p>
 
         <p style="margin-top:0.75rem;"><strong>Persona matching</strong> (from audience hints "nursing students"):</p>
         <div class="code-block">
